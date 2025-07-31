@@ -9,9 +9,10 @@ class Boid:
         self.vel = np.array([np.cos(angle), np.sin(angle)], dtype = float)
         self.acc = np.zeros(2)
         self.max_speed = 4
-        self.max_force = 0.05
-        self.perception = 50
+        self.max_force = 0.25
+        self.perception = 100
         self.width, self.height = width, height
+        self.color = (random.randint(150, 255), random.randint(0, 80), random.randint(150, 255))
 
     def edges(self, margin = 50, strength = 0.5):
         steer = np.zeros(2)
@@ -53,7 +54,6 @@ class Boid:
             if dist < self.perception:
                 avg_vector += other.vel
                 tot += 1
-
             
         if tot > 0:
             avg_vector /= tot
@@ -134,5 +134,15 @@ class Boid:
         return vec
     
     def draw(self, frame):
-        x, y = self.pos.astype(int)
-        cv2.circle(frame, (x, y), 2, (255, 255, 255), -1)
+        width, length, rounding = 6, 10, 2
+
+        direction = self.vel.copy()
+        if np.linalg.norm(direction) == 0: direction = np.array([1.0, 0.0])
+        else: direction /= np.linalg.norm(direction)
+
+        ortho = np.array([direction[1], direction[0]])
+        tip = self.pos + direction * length
+        left = self.pos - direction * rounding + ortho * width
+        right = left - 2 * ortho * width
+
+        cv2.fillConvexPoly(frame, np.array([tip, left, right], dtype = np.int32), self.color)
